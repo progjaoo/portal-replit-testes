@@ -1,0 +1,4361 @@
+Com base nessa API feita em .NET 10, do Portal de Notícias do GTF, preciso criar um CMS, com toda estrutura de SEO, A parte de Gestão do Conteúdo, publicação das postagens, gestão das imagens,  videos, Midas né, gestão completa dos usuários, permissões, logins de diversos usuários diferentes. E todas demais funcionalidades que um CMS de um portal de notícias precisa ter…. Estou usando MY SQL como banco, em especifico esse portal é bem dinâmico relacionado a Cores, nas trocas de cores de editoriais e emissoras, deve ter também esse controle no CMS, poder selecionar cores de editorias ao cria-los, gestão da postagem. 
+
+MYSQL DATABASE
+
+CREATE TABLE `Cidade` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Nome` varchar(100) NOT NULL,
+  `EstadoId` int NOT NULL,
+  `RegiaoId` int DEFAULT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_Cidade_Estado` (`EstadoId`),
+  KEY `FK_Cidade_Regiao` (`RegiaoId`),
+  CONSTRAINT `FK_Cidade_Estado` FOREIGN KEY (`EstadoId`) REFERENCES `Estado` (`Id`),
+  CONSTRAINT `FK_Cidade_Regiao` FOREIGN KEY (`RegiaoId`) REFERENCES `Regiao` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Comentario` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `PostId` int NOT NULL,
+  `UsuarioId` int DEFAULT NULL,
+  `NomeVisitante` varchar(150) DEFAULT NULL,
+  `Conteudo` varchar(1000) NOT NULL,
+  `Status` varchar(20) NOT NULL DEFAULT 'Pendente',
+  `DataCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`),
+  KEY `FK_Comentario_Post` (`PostId`),
+  KEY `FK_Comentario_Usuario` (`UsuarioId`),
+  KEY `IDX_Comentario_Status` (`Status`),
+  CONSTRAINT `FK_Comentario_Post` FOREIGN KEY (`PostId`) REFERENCES `Post` (`Id`),
+  CONSTRAINT `FK_Comentario_Usuario` FOREIGN KEY (`UsuarioId`) REFERENCES `Usuario` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Editorial` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `TipoPostagem` varchar(255) NOT NULL,
+  `TemaEditorialId` int NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Emissora` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `NomeSocial` varchar(255) NOT NULL,
+  `RazaoSocial` varchar(255) NOT NULL,
+  `Cep` varchar(20) NOT NULL,
+  `Endereco` varchar(255) NOT NULL,
+  `Numero` varchar(100) NOT NULL,
+  `Bairro` varchar(255) NOT NULL,
+  `Estado` varchar(255) NOT NULL,
+  `Cidade` varchar(255) NOT NULL,
+  `Slug` varchar(100) NOT NULL,
+  `Logo` varchar(255) NOT NULL,
+  `LogoSmall` varchar(255) NOT NULL,
+  `TemaPrincipal` varchar(255) NOT NULL,
+  `Ativa` tinyint(1) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `EmissoraRegiao` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `EmissoraId` int NOT NULL,
+  `RegiaoId` int NOT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_ER_Emissora` (`EmissoraId`),
+  KEY `FK_ER_Regiao` (`RegiaoId`),
+  CONSTRAINT `FK_ER_Emissora` FOREIGN KEY (`EmissoraId`) REFERENCES `Emissora` (`Id`),
+  CONSTRAINT `FK_ER_Regiao` FOREIGN KEY (`RegiaoId`) REFERENCES `Regiao` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Estado` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Nome` varchar(100) NOT NULL,
+  `Sigla` char(2) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Funcao` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `TipoFuncao` varchar(100) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `FuncaoPermissao` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `FuncaoId` int NOT NULL,
+  `PermissaoId` int NOT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_FP_Funcao` (`FuncaoId`),
+  KEY `FK_FP_Permissao` (`PermissaoId`),
+  CONSTRAINT `FK_FP_Funcao` FOREIGN KEY (`FuncaoId`) REFERENCES `Funcao` (`Id`),
+  CONSTRAINT `FK_FP_Permissao` FOREIGN KEY (`PermissaoId`) REFERENCES `Permissao` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Newsletter` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Email` varchar(255) NOT NULL,
+  `DataCadastro` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `Email` (`Email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `Notificacao` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `UsuarioId` int NOT NULL,
+  `Titulo` varchar(200) NOT NULL,
+  `Mensagem` varchar(500) NOT NULL,
+  `Lida` tinyint(1) NOT NULL DEFAULT '0',
+  `DataCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`),
+  KEY `FK_Notificacao_Usuario` (`UsuarioId`),
+  CONSTRAINT `FK_Notificacao_Usuario` FOREIGN KEY (`UsuarioId`) REFERENCES `Usuario` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Permissao` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `TipoPermissao` varchar(100) NOT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `TipoPermissao` (`TipoPermissao`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Post` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Titulo` varchar(255) NOT NULL,
+  `Subtitulo` varchar(255) NOT NULL,
+  `Conteudo` longtext NOT NULL,
+  `Imagem` varchar(255) DEFAULT NULL,
+  `Slug` varchar(255) NOT NULL,
+  `EditorialId` int NOT NULL,
+  `EmissoraId` int NOT NULL,
+  `CidadeId` int NOT NULL,
+  `UsuarioCriacaoId` int NOT NULL,
+  `UsuarioAprovacaoId` int DEFAULT NULL,
+  `StatusPost` int NOT NULL,
+  `DataCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `DataAprovacao` datetime DEFAULT NULL,
+  `DataEdicao` datetime DEFAULT NULL,
+  `PublicadoEm` datetime DEFAULT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_Post_Emissora` (`EmissoraId`),
+  KEY `FK_Post_Cidade` (`CidadeId`),
+  KEY `FK_Post_UserCriacao` (`UsuarioCriacaoId`),
+  KEY `FK_Post_UserAprovacao` (`UsuarioAprovacaoId`),
+  KEY `IDX_Post_Status` (`StatusPost`),
+  KEY `IDX_Post_PublicadoEm` (`PublicadoEm`),
+  KEY `IDX_Post_Editorial` (`EditorialId`),
+  CONSTRAINT `FK_Post_Cidade` FOREIGN KEY (`CidadeId`) REFERENCES `Cidade` (`Id`),
+  CONSTRAINT `FK_Post_Editorial` FOREIGN KEY (`EditorialId`) REFERENCES `Editorial` (`Id`),
+  CONSTRAINT `FK_Post_Emissora` FOREIGN KEY (`EmissoraId`) REFERENCES `Emissora` (`Id`),
+  CONSTRAINT `FK_Post_UserAprovacao` FOREIGN KEY (`UsuarioAprovacaoId`) REFERENCES `Usuario` (`Id`),
+  CONSTRAINT `FK_Post_UserCriacao` FOREIGN KEY (`UsuarioCriacaoId`) REFERENCES `Usuario` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `PostComentario` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `PostId` int NOT NULL,
+  `ComentarioId` int NOT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_PostComentario_Post` (`PostId`),
+  KEY `FK_PostComentario_Comentario` (`ComentarioId`),
+  CONSTRAINT `FK_PostComentario_Comentario` FOREIGN KEY (`ComentarioId`) REFERENCES `Comentario` (`Id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_PostComentario_Post` FOREIGN KEY (`PostId`) REFERENCES `Post` (`Id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `PostHistorico` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `PostId` int NOT NULL,
+  `UsuarioId` int NOT NULL,
+  `Acao` varchar(50) NOT NULL,
+  `DataAcao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`),
+  KEY `FK_PH_Post` (`PostId`),
+  KEY `FK_PH_Usuario` (`UsuarioId`),
+  CONSTRAINT `FK_PH_Post` FOREIGN KEY (`PostId`) REFERENCES `Post` (`Id`),
+  CONSTRAINT `FK_PH_Usuario` FOREIGN KEY (`UsuarioId`) REFERENCES `Usuario` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `PostImagem` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `PostId` int NOT NULL,
+  `UrlPost` varchar(500) NOT NULL,
+  `Ordem` int NOT NULL DEFAULT '0',
+  `Tipo` int DEFAULT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_PostImagem_Post` (`PostId`),
+  CONSTRAINT `FK_PostImagem_Post` FOREIGN KEY (`PostId`) REFERENCES `Post` (`Id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `PostTag` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `PostId` int NOT NULL,
+  `TagId` int NOT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_PostTag_Post` (`PostId`),
+  KEY `FK_PostTag_Tag` (`TagId`),
+  CONSTRAINT `FK_PostTag_Post` FOREIGN KEY (`PostId`) REFERENCES `Post` (`Id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_PostTag_Tag` FOREIGN KEY (`TagId`) REFERENCES `Tag` (`Id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `PostVisualizacao` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `PostId` int NOT NULL,
+  `Ip` varchar(45) DEFAULT NULL,
+  `DataVisualizacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`),
+  KEY `FK_PV_Post` (`PostId`),
+  CONSTRAINT `FK_PV_Post` FOREIGN KEY (`PostId`) REFERENCES `Post` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Regiao` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Nome` varchar(150) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Streaming` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `EmissoraId` int NOT NULL,
+  `Url` varchar(500) NOT NULL,
+  `Porta` varchar(255) NOT NULL,
+  `TipoStream` varchar(50) NOT NULL,
+  `LinkApi` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `FK_Streaming_Emissora` (`EmissoraId`),
+  CONSTRAINT `FK_Streaming_Emissora` FOREIGN KEY (`EmissoraId`) REFERENCES `Emissora` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Tag` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Nome` varchar(100) NOT NULL,
+  `Slug` varchar(100) NOT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `Slug` (`Slug`)
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `TemaEditorial` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Descricao` varchar(255) NOT NULL,
+  `CorPrimaria` varchar(255) NOT NULL,
+  `CorSecundaria` varchar(255) NOT NULL,
+  `CorFonte` varchar(255) NOT NULL,
+  `Logo` varchar(255) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `Usuario` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Email` varchar(255) NOT NULL,
+  `NomeCompleto` varchar(200) NOT NULL,
+  `SenhaHash` varchar(255) NOT NULL,
+  `StatusUsuario` int NOT NULL,
+  `FuncaoId` int NOT NULL,
+  `DataCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `Email` (`Email`),
+  KEY `FK_Usuario_Funcao` (`FuncaoId`),
+  CONSTRAINT `FK_Usuario_Funcao` FOREIGN KEY (`FuncaoId`) REFERENCES `Funcao` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `UsuarioEmissora`
+--
+
+DROP TABLE IF EXISTS `UsuarioEmissora`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `UsuarioEmissora` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `UsuarioId` int NOT NULL,
+  `EmissoraId` int NOT NULL,
+  `FuncaoId` int NOT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `IDX_UE_Usuario` (`UsuarioId`),
+  KEY `IDX_UE_Emissora` (`EmissoraId`),
+  KEY `IDX_UE_Funcao` (`FuncaoId`),
+  CONSTRAINT `FK_UE_Emissora` FOREIGN KEY (`EmissoraId`) REFERENCES `Emissora` (`Id`),
+  CONSTRAINT `FK_UE_Funcao` FOREIGN KEY (`FuncaoId`) REFERENCES `Funcao` (`Id`),
+  CONSTRAINT `FK_UE_Usuario` FOREIGN KEY (`UsuarioId`) REFERENCES `Usuario` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+JSON DA API http://localhost:5091/swagger/v1/swagger.json
+
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "GTF NEWS",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/cidade/buscarTodos": {
+      "get": {
+        "tags": [
+          "Cidade"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cidade/{id}/buscarPorId": {
+      "get": {
+        "tags": [
+          "Cidade"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cidade/criarCidade": {
+      "post": {
+        "tags": [
+          "Cidade"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CidadeCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CidadeCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CidadeCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cidade/{id}/atualizarCidade": {
+      "put": {
+        "tags": [
+          "Cidade"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CidadeCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CidadeCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CidadeCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/cidade/{id}/deletarCidade": {
+      "delete": {
+        "tags": [
+          "Cidade"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/editorial/buscarPorId/{id}": {
+      "get": {
+        "tags": [
+          "Editorial"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditorialViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditorialViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditorialViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/editorial/buscarTodos": {
+      "get": {
+        "tags": [
+          "Editorial"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/editorial/criarEditorial": {
+      "post": {
+        "tags": [
+          "Editorial"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditorialCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditorialCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditorialCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/editorial/{id}/atualizarEditorial": {
+      "put": {
+        "tags": [
+          "Editorial"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditorialCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditorialCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditorialCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/editorial/{id}/deletarEditorial": {
+      "delete": {
+        "tags": [
+          "Editorial"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/emissora/{id}/buscarPorId": {
+      "get": {
+        "tags": [
+          "Emissora"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmissoraViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmissoraViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmissoraViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/emissora/buscarTodos": {
+      "get": {
+        "tags": [
+          "Emissora"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/emissora/criarEmissora": {
+      "post": {
+        "tags": [
+          "Emissora"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/emissora/{id}/atualizarEmissora": {
+      "put": {
+        "tags": [
+          "Emissora"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/emissora/{id}/deletarEmissora": {
+      "delete": {
+        "tags": [
+          "Emissora"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/emissora-regiao/buscarTodos": {
+      "get": {
+        "tags": [
+          "EmissoraRegiao"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/emissora-regiao/criar": {
+      "post": {
+        "tags": [
+          "EmissoraRegiao"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraRegiaoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraRegiaoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmissoraRegiaoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/emissora-regiao/{id}/deletar": {
+      "delete": {
+        "tags": [
+          "EmissoraRegiao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estado/buscarTodos": {
+      "get": {
+        "tags": [
+          "Estado"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estado/{id}/buscarPorId": {
+      "get": {
+        "tags": [
+          "Estado"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estado/criarEstado": {
+      "post": {
+        "tags": [
+          "Estado"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estado/{id}/atualizarEstado": {
+      "put": {
+        "tags": [
+          "Estado"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/estado/{id}/deletarEstado": {
+      "delete": {
+        "tags": [
+          "Estado"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcoes/buscarTodos": {
+      "get": {
+        "tags": [
+          "Funcao"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcoes/{id}/funcaoPorId": {
+      "get": {
+        "tags": [
+          "Funcao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcoes/criarFuncao": {
+      "post": {
+        "tags": [
+          "Funcao"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcoes/{id}/atualizarFuncao": {
+      "put": {
+        "tags": [
+          "Funcao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcoes/{id}/deletarFuncao": {
+      "delete": {
+        "tags": [
+          "Funcao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcao-permissao/buscarTodos": {
+      "get": {
+        "tags": [
+          "FuncaoPermissao"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcao-permissao/criar": {
+      "post": {
+        "tags": [
+          "FuncaoPermissao"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoPermissaoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoPermissaoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuncaoPermissaoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/funcao-permissao/{id}/deletar": {
+      "delete": {
+        "tags": [
+          "FuncaoPermissao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/media/uploadAntigo": {
+      "post": {
+        "tags": [
+          "Media"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/media/upload": {
+      "post": {
+        "tags": [
+          "Media"
+        ],
+        "parameters": [
+          {
+            "name": "usuarioId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/media": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/permissao/buscarTodasPermissoes": {
+      "get": {
+        "tags": [
+          "Permissao"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissaoViewmModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissaoViewmModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissaoViewmModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/permissao/{id}/buscarPorId": {
+      "get": {
+        "tags": [
+          "Permissao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissaoViewmModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissaoViewmModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissaoViewmModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/permissao/PermissaoPorUsuario/{usuarioId}": {
+      "get": {
+        "tags": [
+          "Permissao"
+        ],
+        "parameters": [
+          {
+            "name": "usuarioId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissaoResponseViewModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissaoResponseViewModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissaoResponseViewModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/permissao/ciarPermissao": {
+      "post": {
+        "tags": [
+          "Permissao"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissaoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissaoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissaoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/permissao/{id}/atualizarPermissao": {
+      "put": {
+        "tags": [
+          "Permissao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissaoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissaoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissaoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/permissao/{id}/deletarPermissao": {
+      "delete": {
+        "tags": [
+          "Permissao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/slug/{slug}": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/sitemap.xml": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/robots.txt": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/regiao/{regiaoId}": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "regiaoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/mais-recentes": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/editorial/{editorialId}": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "editorialId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/user/{userName}": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/public": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/search": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/admin/status": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "statusPost",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StatusPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/buscarPorEmissora/{emissoraId}": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "emissoraId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "emissoraId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/buscarPorSubcategory/{subcategoryId}": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "subcategoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/filtro": {
+      "get": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "dateFilter",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/FiltroPostEnum"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/OrdenaPostEnum"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/createPost": {
+      "post": {
+        "tags": [
+          "Post"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/updatePost": {
+      "put": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostUpdateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostUpdateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostUpdateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/deletePost": {
+      "delete": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/enviar-revisao": {
+      "put": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/aprovar": {
+      "put": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/rejeitar": {
+      "put": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/posts/{id}/upload-imagem": {
+      "post": {
+        "tags": [
+          "Post"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/regiao/buscarTodos": {
+      "get": {
+        "tags": [
+          "Regiao"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/regiao/{id}/regiaoPorId": {
+      "get": {
+        "tags": [
+          "Regiao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/regiao/criarRegiao": {
+      "post": {
+        "tags": [
+          "Regiao"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegiaoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegiaoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegiaoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/regiao/{id}/atualizarRegiao": {
+      "put": {
+        "tags": [
+          "Regiao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegiaoCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegiaoCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegiaoCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/regiao/{id}/deletarRegiaio": {
+      "delete": {
+        "tags": [
+          "Regiao"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/streaming/buscarTodos": {
+      "get": {
+        "tags": [
+          "Streaming"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/streaming/{id}/streamingPorId": {
+      "get": {
+        "tags": [
+          "Streaming"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/streaming/criarStreaming": {
+      "post": {
+        "tags": [
+          "Streaming"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamingCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamingCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamingCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/streaming/{id}/atualizarStreaming": {
+      "put": {
+        "tags": [
+          "Streaming"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamingCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamingCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamingCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/streaming/{id}/deletarStreaming": {
+      "delete": {
+        "tags": [
+          "Streaming"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/subcategorias/{id}": {
+      "get": {
+        "tags": [
+          "Subcategoria"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/subcategorias/buscarTodasSubcategorias": {
+      "get": {
+        "tags": [
+          "Subcategoria"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/subcategorias/criarSubcategoria": {
+      "post": {
+        "tags": [
+          "Subcategoria"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubcategoriaViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubcategoriaViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubcategoriaViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/subcategorias/{id}/deletarSubcategoria": {
+      "delete": {
+        "tags": [
+          "Subcategoria"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tema-editorial": {
+      "get": {
+        "tags": [
+          "TemaEditorial"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "TemaEditorial"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemaEditorialViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemaEditorialViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemaEditorialViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tema-editorial/{id}": {
+      "get": {
+        "tags": [
+          "TemaEditorial"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "TemaEditorial"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemaEditorialViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemaEditorialViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemaEditorialViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "TemaEditorial"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/usuarios": {
+      "get": {
+        "tags": [
+          "Usuario"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioResponseViewModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioResponseViewModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioResponseViewModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Usuario"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsuarioCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsuarioCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsuarioCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}": {
+      "get": {
+        "tags": [
+          "Usuario"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioResponseViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioResponseViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioResponseViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/login": {
+      "post": {
+        "tags": [
+          "Usuario"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/usuario-emissora/buscarTodos": {
+      "get": {
+        "tags": [
+          "UsuarioEmissora"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/usuario-emissora/criar": {
+      "post": {
+        "tags": [
+          "UsuarioEmissora"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsuarioEmissoraCreateViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsuarioEmissoraCreateViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsuarioEmissoraCreateViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/usuario-emissora/{id}/deletar": {
+      "delete": {
+        "tags": [
+          "UsuarioEmissora"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Cidade": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "estadoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CidadeCreateViewModel": {
+        "required": [
+          "estadoId",
+          "nome"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "estadoId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Comentario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "post": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "nomeVisitante": {
+            "type": "string",
+            "nullable": true
+          },
+          "conteudo": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataCriacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "postComentarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostComentario"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSubcategoriaViewModel": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "editorialId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Editorial": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoPostagem": {
+            "type": "string",
+            "nullable": true
+          },
+          "temaEditorialId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subcategorias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Subcategoria"
+            },
+            "nullable": true
+          },
+          "temaEditorial": {
+            "$ref": "#/components/schemas/TemaEditorial"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditorialCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "tipoPostagem": {
+            "type": "string",
+            "nullable": true
+          },
+          "temaEditorialId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditorialViewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoPostagem": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Emissora": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nomeSocial": {
+            "type": "string",
+            "nullable": true
+          },
+          "razaoSocial": {
+            "type": "string",
+            "nullable": true
+          },
+          "cep": {
+            "type": "string",
+            "nullable": true
+          },
+          "endereco": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero": {
+            "type": "string",
+            "nullable": true
+          },
+          "bairro": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "cidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoSmall": {
+            "type": "string",
+            "nullable": true
+          },
+          "temaPrincipal": {
+            "type": "string",
+            "nullable": true
+          },
+          "ativa": {
+            "type": "boolean"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            },
+            "nullable": true
+          },
+          "usuarioEmissoras": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsuarioEmissora"
+            },
+            "nullable": true
+          },
+          "streamings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Streaming"
+            },
+            "nullable": true
+          },
+          "emissoraRegioes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmissoraRegiao"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmissoraCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "nomeSocial": {
+            "type": "string",
+            "nullable": true
+          },
+          "razaoSocial": {
+            "type": "string",
+            "nullable": true
+          },
+          "cep": {
+            "type": "string",
+            "nullable": true
+          },
+          "endereco": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero": {
+            "type": "string",
+            "nullable": true
+          },
+          "bairro": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "cidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoSmall": {
+            "type": "string",
+            "nullable": true
+          },
+          "temaPrincipal": {
+            "type": "string",
+            "nullable": true
+          },
+          "ativa": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmissoraRegiao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emissora": {
+            "$ref": "#/components/schemas/Emissora"
+          },
+          "regiaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "regiao": {
+            "$ref": "#/components/schemas/Regiao"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmissoraRegiaoCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "regiaoId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmissoraViewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nomeSocial": {
+            "type": "string",
+            "nullable": true
+          },
+          "razaoSocial": {
+            "type": "string",
+            "nullable": true
+          },
+          "cep": {
+            "type": "string",
+            "nullable": true
+          },
+          "endereco": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero": {
+            "type": "string",
+            "nullable": true
+          },
+          "bairro": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "cidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoSmall": {
+            "type": "string",
+            "nullable": true
+          },
+          "temaPrincipal": {
+            "type": "string",
+            "nullable": true
+          },
+          "ativa": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Estado": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sigla": {
+            "type": "string",
+            "nullable": true
+          },
+          "regiaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "regiao": {
+            "$ref": "#/components/schemas/Regiao"
+          },
+          "cidades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cidade"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EstadoCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sigla": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FiltroPostEnum": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "Funcao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoFuncao": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Usuario"
+            },
+            "nullable": true
+          },
+          "funcaoPermissoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FuncaoPermissao"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FuncaoCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "tipoFuncao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FuncaoPermissao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "funcaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "funcao": {
+            "$ref": "#/components/schemas/Funcao"
+          },
+          "permissaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "permissao": {
+            "$ref": "#/components/schemas/Permissao"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FuncaoPermissaoCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "funcaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "permissaoId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FuncaoViewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoFuncao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginRequestViewModel": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "senha": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Midia": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nomeOriginal": {
+            "type": "string",
+            "nullable": true
+          },
+          "nomeArquivo": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMidia"
+          },
+          "dataUpload": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuarioUploadId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "postImagens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostImagem"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MidiaViewModel": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "ordem": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMidia"
+          },
+          "midiaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "midia": {
+            "$ref": "#/components/schemas/Midia"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OrdenaPostEnum": {
+        "enum": [
+          0,
+          1
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "Permissao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoPermissao": {
+            "type": "string",
+            "nullable": true
+          },
+          "funcaoPermissoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FuncaoPermissao"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissaoCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "tipoPermissao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissaoResponseViewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoPermissao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissaoViewmModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoPermissao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "titulo": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtitulo": {
+            "type": "string",
+            "nullable": true
+          },
+          "conteudo": {
+            "type": "string",
+            "nullable": true
+          },
+          "imagem": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "editorialId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "editorial": {
+            "$ref": "#/components/schemas/Editorial"
+          },
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emissora": {
+            "$ref": "#/components/schemas/Emissora"
+          },
+          "cidadeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cidade": {
+            "$ref": "#/components/schemas/Cidade"
+          },
+          "subcategoriaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "subcategoria": {
+            "$ref": "#/components/schemas/Subcategoria"
+          },
+          "usuarioCriacaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usuarioCriacao": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "usuarioAprovacaoId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "usuarioAprovacao": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "statusPost": {
+            "$ref": "#/components/schemas/StatusPost"
+          },
+          "dataCriacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dataAprovacao": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dataEdicao": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publicadoEm": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "imagens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostImagem"
+            },
+            "nullable": true
+          },
+          "postTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostTag"
+            },
+            "nullable": true
+          },
+          "visualizacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostVisualizacao"
+            },
+            "nullable": true
+          },
+          "postComentarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostComentario"
+            },
+            "nullable": true
+          },
+          "comentarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comentario"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostComentario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "post": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "comentarioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comentario": {
+            "$ref": "#/components/schemas/Comentario"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtitulo": {
+            "type": "string",
+            "nullable": true
+          },
+          "conteudo": {
+            "type": "string",
+            "nullable": true
+          },
+          "imagem": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "editorialId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subcategoriaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cidadeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usuarioCriacaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "midias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MidiaViewModel"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostImagem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "post": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "midiaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "midia": {
+            "$ref": "#/components/schemas/Midia"
+          },
+          "ordem": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMidia"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostTag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "post": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "tagId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tag": {
+            "$ref": "#/components/schemas/Tag"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostUpdateViewModel": {
+        "type": "object",
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtitulo": {
+            "type": "string",
+            "nullable": true
+          },
+          "conteudo": {
+            "type": "string",
+            "nullable": true
+          },
+          "imagem": {
+            "type": "string",
+            "nullable": true
+          },
+          "editorialId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subcategoriaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statusPost": {
+            "$ref": "#/components/schemas/StatusPost"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostVisualizacao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "post": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataVisualizacao": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Regiao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "estados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Estado"
+            },
+            "nullable": true
+          },
+          "emissoraRegioes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmissoraRegiao"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegiaoCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StatusPost": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "StatusUsuario": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "Streaming": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emissora": {
+            "$ref": "#/components/schemas/Emissora"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "porta": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoStream": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkApi": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StreamingCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "porta": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoStream": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkApi": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Subcategoria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "editorialId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "editorial": {
+            "$ref": "#/components/schemas/Editorial"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "postTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostTag"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TemaEditorial": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "corPrimaria": {
+            "type": "string",
+            "nullable": true
+          },
+          "corSecundaria": {
+            "type": "string",
+            "nullable": true
+          },
+          "corFonte": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          },
+          "editoriais": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Editorial"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TemaEditorialViewModel": {
+        "type": "object",
+        "properties": {
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "corPrimaria": {
+            "type": "string",
+            "nullable": true
+          },
+          "corSecundaria": {
+            "type": "string",
+            "nullable": true
+          },
+          "corFonte": {
+            "type": "string",
+            "nullable": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TipoMidia": {
+        "enum": [
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "Usuario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "nomeCompleto": {
+            "type": "string",
+            "nullable": true
+          },
+          "senhaHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusUsuario": {
+            "$ref": "#/components/schemas/StatusUsuario"
+          },
+          "funcaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "funcao": {
+            "$ref": "#/components/schemas/Funcao"
+          },
+          "dataCriacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuarioEmissoras": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsuarioEmissora"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsuarioCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "nomeCompleto": {
+            "type": "string",
+            "nullable": true
+          },
+          "senha": {
+            "type": "string",
+            "nullable": true
+          },
+          "funcaoId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsuarioEmissora": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emissora": {
+            "$ref": "#/components/schemas/Emissora"
+          },
+          "funcaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "funcao": {
+            "$ref": "#/components/schemas/Funcao"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsuarioEmissoraCreateViewModel": {
+        "type": "object",
+        "properties": {
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emissoraId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "funcaoId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsuarioResponseViewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "nomeCompleto": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusUsuario": {
+            "$ref": "#/components/schemas/StatusUsuario"
+          },
+          "funcaoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nomeFuncao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Informe o token JWT no formato: Bearer {seu_token}",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}
+
+Também vou lhe enviar o DBCONTEXT
+
+using Microsoft.EntityFrameworkCore;
+
+namespace PortalGtf.Core.Entities;
+
+public class PortalGtfNewsDbContext : DbContext
+{
+    public PortalGtfNewsDbContext(DbContextOptions<PortalGtfNewsDbContext> options)
+        : base(options) { }
+    
+    public DbSet<Subcategoria> Subcategoria => Set<Subcategoria>();
+    public DbSet<Cidade> Cidade => Set<Cidade>();
+    public DbSet<Comentario> Comentario => Set<Comentario>();
+    public DbSet<Editorial> Editorial => Set<Editorial>();
+    public DbSet<Emissora> Emissora => Set<Emissora>();
+    public DbSet<EmissoraRegiao> EmissoraRegiao => Set<EmissoraRegiao>();
+    public DbSet<Estado> Estado => Set<Estado>();
+    public DbSet<Funcao> Funcao => Set<Funcao>();
+    public DbSet<FuncaoPermissao> FuncaoPermissao => Set<FuncaoPermissao>();
+    public DbSet<Newsletter> Newsletter => Set<Newsletter>();
+    public DbSet<Notificacao> Notificacao => Set<Notificacao>();
+    public DbSet<Permissao> Permissao => Set<Permissao>();
+    public DbSet<Post> Post => Set<Post>();
+    public DbSet<PostComentario> PostComentario => Set<PostComentario>();
+    public DbSet<PostHistorico> PostHistorico => Set<PostHistorico>();
+    public DbSet<PostImagem> PostImagem => Set<PostImagem>();
+    public DbSet<PostTag> PostTag => Set<PostTag>();
+    public DbSet<PostVisualizacao> PostVisualizacao => Set<PostVisualizacao>();
+    public DbSet<Regiao> Regiao => Set<Regiao>();
+    public DbSet<Streaming> Streaming => Set<Streaming>();
+    public DbSet<Tag> Tag => Set<Tag>();
+    public DbSet<TemaEditorial> TemaEditorial => Set<TemaEditorial>();
+    public DbSet<Usuario> Usuario => Set<Usuario>();
+    public DbSet<UsuarioEmissora> UsuarioEmissora => Set<UsuarioEmissora>();
+    public DbSet<Midia> Midia => Set<Midia>();
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        
+        modelBuilder.Entity<FuncaoPermissao>()
+            .HasKey(fp => new { fp.FuncaoId, fp.PermissaoId });
+
+        modelBuilder.Entity<FuncaoPermissao>()
+            .HasOne(fp => fp.Funcao)
+            .WithMany(f => f.FuncaoPermissoes)
+            .HasForeignKey(fp => fp.FuncaoId);
+
+        modelBuilder.Entity<FuncaoPermissao>()
+            .HasOne(fp => fp.Permissao)
+            .WithMany(p => p.FuncaoPermissoes)
+            .HasForeignKey(fp => fp.PermissaoId);
+
+        /* ============================
+         * USUÁRIO
+         * ============================ */
+        modelBuilder.Entity<Usuario>()
+            .HasOne(u => u.Funcao)
+            .WithMany(f => f.Usuarios)
+            .HasForeignKey(u => u.FuncaoId);
+        /* ============================
+         * USUÁRIO / EMISSORA
+         * ============================ */
+        modelBuilder.Entity<UsuarioEmissora>()
+            .HasOne(ue => ue.Usuario)
+            .WithMany(u => u.UsuarioEmissoras)
+            .HasForeignKey(ue => ue.UsuarioId);
+
+        modelBuilder.Entity<UsuarioEmissora>()
+            .HasOne(ue => ue.Emissora)
+            .WithMany(e => e.UsuarioEmissoras)
+            .HasForeignKey(ue => ue.EmissoraId);
+
+        modelBuilder.Entity<UsuarioEmissora>()
+            .HasOne(ue => ue.Funcao)
+            .WithMany()
+            .HasForeignKey(ue => ue.FuncaoId);
+        
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.Property(u => u.StatusUsuario)
+                .HasConversion<int>()
+                .IsRequired();
+        });
+        /* ============================
+         * LOCALIZAÇÃO
+         * ============================ */
+        modelBuilder.Entity<Estado>()
+            .HasOne(e => e.Regiao)
+            .WithMany(r => r.Estados)
+            .HasForeignKey(e => e.RegiaoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // modelBuilder.Entity<Cidade>()
+        //     .HasOne(c => c.Estado)
+        //     .WithMany(e => e.Cidades)
+        //     .HasForeignKey(c => c.EstadoId)
+        //     .OnDelete(DeleteBehavior.Restrict);
+
+        /* ============================
+         * EMISSORA / REGIÃO (N:N)
+         * ============================ */
+        modelBuilder.Entity<EmissoraRegiao>()
+            .HasKey(er => new { er.EmissoraId, er.RegiaoId });
+
+        modelBuilder.Entity<EmissoraRegiao>()
+            .HasOne(er => er.Emissora)
+            .WithMany(e => e.EmissoraRegioes)
+            .HasForeignKey(er => er.EmissoraId);
+
+        modelBuilder.Entity<EmissoraRegiao>()
+            .HasOne(er => er.Regiao)
+            .WithMany(r => r.EmissoraRegioes)
+            .HasForeignKey(er => er.RegiaoId);
+
+        /* ============================
+         * STREAMING
+         * ============================ */
+        modelBuilder.Entity<Streaming>()
+            .HasOne(s => s.Emissora)
+            .WithMany(e => e.Streamings)
+            .HasForeignKey(s => s.EmissoraId);
+
+        /* ============================
+         * POST
+         * ============================ */
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Editorial)
+            .WithMany(e => e.Posts)
+            .HasForeignKey(p => p.EditorialId);
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Emissora)
+            .WithMany(e => e.Posts)
+            .HasForeignKey(p => p.EmissoraId);
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Cidade)
+            .WithMany(c => c.Posts)
+            .HasForeignKey(p => p.CidadeId);
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.UsuarioCriacao)
+            .WithMany()
+            .HasForeignKey(p => p.UsuarioCriacaoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.UsuarioAprovacao)
+            .WithMany()
+            .HasForeignKey(p => p.UsuarioAprovacaoId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Subcategoria>()
+            .HasOne(s => s.Editorial)
+            .WithMany(e => e.Subcategorias)
+            .HasForeignKey(s => s.EditorialId);
+        
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Subcategoria)
+            .WithMany(s => s.Posts)
+            .HasForeignKey(p => p.SubcategoriaId)
+            .OnDelete(DeleteBehavior.SetNull);
+        /* ============================
+         * POST / TAG (N:N)
+         * ============================ */
+        modelBuilder.Entity<PostTag>()
+            .HasKey(pt => new { pt.PostId, pt.TagId });
+
+        modelBuilder.Entity<PostTag>()
+            .HasOne(pt => pt.Post)
+            .WithMany(p => p.PostTags)
+            .HasForeignKey(pt => pt.PostId);
+
+        modelBuilder.Entity<PostTag>()
+            .HasOne(pt => pt.Tag)
+            .WithMany(t => t.PostTags)
+            .HasForeignKey(pt => pt.TagId);
+
+        /* ============================
+         * POST IMAGEM
+         * ============================ */
+        modelBuilder.Entity<PostImagem>()
+            .HasOne(pi => pi.Post)
+            .WithMany(p => p.Imagens)
+            .HasForeignKey(pi => pi.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+        /*
+         * RELAÇÃO DE MEDIA LIBRARY COM CMS
+         */
+        modelBuilder.Entity<PostImagem>()
+            .HasOne(pi => pi.Midia)
+            .WithMany(m => m.PostImagens)
+            .HasForeignKey(pi => pi.MidiaId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        
+        /* ============================
+         * POST HISTÓRICO
+         * ============================ */
+        
+        /* modelBuilder.Entity<PostHistorico>()
+            .HasOne(ph => ph.Post)
+            .WithMany(p => p.Historicos)
+            .HasForeignKey(ph => ph.PostId);*/
+
+        modelBuilder.Entity<PostHistorico>()
+            .HasOne(ph => ph.Usuario)
+            .WithMany()
+            .HasForeignKey(ph => ph.UsuarioId);
+
+        /* ============================
+         * COMENTÁRIO
+         * ============================ */
+        modelBuilder.Entity<Comentario>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+
+            entity.Property(c => c.Conteudo)
+                .IsRequired()
+                .HasMaxLength(1000);
+
+            entity.Property(c => c.Status)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            entity.HasOne(c => c.Post)
+                .WithMany(p => p.Comentarios) 
+                .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(c => c.Usuario)
+                .WithMany()
+                .HasForeignKey(c => c.UsuarioId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+
+        modelBuilder.Entity<Comentario>()
+            .HasOne(c => c.Usuario)
+            .WithMany()
+            .HasForeignKey(c => c.UsuarioId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<PostComentario>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Post)
+                .WithMany(p => p.PostComentarios)
+                .HasForeignKey(e => e.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Comentario)
+                .WithMany(c => c.PostComentarios)
+                .HasForeignKey(e => e.ComentarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        /* ============================
+         * NOTIFICAÇÃO
+         * ============================ */
+       /* modelBuilder.Entity<Notificacao>()
+            .HasOne(n => n.Usuario)
+            .WithMany(u => u.Notificacoes)
+            .HasForeignKey(n => n.UsuarioId);*/
+
+        /* ============================
+         * POST VISUALIZAÇÃO
+         * ============================ */
+        modelBuilder.Entity<PostVisualizacao>()
+            .HasOne(pv => pv.Post)
+            .WithMany(p => p.Visualizacoes)
+            .HasForeignKey(pv => pv.PostId);
+    }
+}
