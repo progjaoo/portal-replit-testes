@@ -32,7 +32,8 @@ export default function PostsPage() {
   // Form State
   const [formData, setFormData] = useState({
     titulo: "", subtitulo: "", conteudo: "", slug: "", 
-    statusPost: "1", editorialId: "", emissoraId: ""
+    statusPost: "1", editorialId: "", emissoraId: "",
+    metaTitle: "", metaDescription: ""
   });
 
   const handleOpenDialog = (post?: Post) => {
@@ -45,7 +46,9 @@ export default function PostsPage() {
         slug: post.slug,
         statusPost: String(post.statusPost),
         editorialId: String(post.editorialId || ""),
-        emissoraId: String(post.emissoraId || "")
+        emissoraId: String(post.emissoraId || ""),
+        metaTitle: post.metaTitle || "",
+        metaDescription: post.metaDescription || ""
       });
     } else {
       setEditingPost(null);
@@ -64,6 +67,8 @@ export default function PostsPage() {
       statusPost: parseInt(formData.statusPost),
       editorialId: formData.editorialId ? parseInt(formData.editorialId) : null,
       emissoraId: formData.emissoraId ? parseInt(formData.emissoraId) : null,
+      metaTitle: formData.metaTitle,
+      metaDescription: formData.metaDescription,
     };
 
     if (editingPost) {
@@ -199,6 +204,17 @@ export default function PostsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Título (SEO)</Label>
+                <Input value={formData.metaTitle} onChange={e => setFormData({...formData, metaTitle: e.target.value})} placeholder="Título para buscadores" />
+              </div>
+              <div className="space-y-2">
+                <Label>Descrição (SEO)</Label>
+                <Input value={formData.metaDescription} onChange={e => setFormData({...formData, metaDescription: e.target.value})} placeholder="Resumo para buscadores" />
               </div>
             </div>
 

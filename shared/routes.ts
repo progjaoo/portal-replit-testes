@@ -1,16 +1,36 @@
 import { z } from 'zod';
 import { 
   insertPostSchema, insertEmissoraSchema, insertEditorialSchema, insertTemaEditorialSchema,
-  posts, emissoras, editoriais, temaEditoriais
+  insertUsuarioSchema, insertMediaSchema,
+  posts, emissoras, editoriais, temaEditoriais, usuarios, media
 } from './schema';
 
 export const errorSchemas = {
   validation: z.object({ message: z.string(), field: z.string().optional() }),
   notFound: z.object({ message: z.string() }),
+  unauthorized: z.object({ message: z.string() }),
   internal: z.object({ message: z.string() }),
 };
 
 export const api = {
+  auth: {
+    login: {
+      method: 'POST' as const,
+      path: '/api/login' as const,
+      input: z.object({ email: z.string().email(), password: z.string() }),
+      responses: { 200: z.object({ user: z.custom<typeof usuarios.$inferSelect>() }), 401: errorSchemas.unauthorized },
+    },
+    logout: {
+      method: 'POST' as const,
+      path: '/api/logout' as const,
+      responses: { 200: z.object({ success: z.boolean() }) },
+    },
+    me: {
+      method: 'GET' as const,
+      path: '/api/me' as const,
+      responses: { 200: z.custom<typeof usuarios.$inferSelect>(), 401: errorSchemas.unauthorized },
+    }
+  },
   posts: {
     list: {
       method: 'GET' as const,
@@ -93,6 +113,32 @@ export const api = {
       path: '/api/tema-editoriais' as const,
       input: insertTemaEditorialSchema,
       responses: { 201: z.custom<typeof temaEditoriais.$inferSelect>(), 400: errorSchemas.validation },
+    }
+  },
+  usuarios: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/usuarios' as const,
+      responses: { 200: z.array(z.custom<typeof usuarios.$inferSelect>()) },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/usuarios' as const,
+      input: insertUsuarioSchema,
+      responses: { 201: z.custom<typeof usuarios.$inferSelect>(), 400: errorSchemas.validation },
+    }
+  },
+  media: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/media' as const,
+      responses: { 200: z.array(z.custom<typeof media.$inferSelect>()) },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/media' as const,
+      input: insertMediaSchema,
+      responses: { 201: z.custom<typeof media.$inferSelect>(), 400: errorSchemas.validation },
     }
   }
 };

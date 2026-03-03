@@ -1,14 +1,21 @@
 import {
-  posts, emissoras, editoriais, temaEditoriais,
+  posts, emissoras, editoriais, temaEditoriais, usuarios, media,
   type Post, type CreatePostRequest, type UpdatePostRequest,
   type Emissora, type CreateEmissoraRequest,
   type Editorial, type CreateEditorialRequest,
-  type TemaEditorial, type CreateTemaEditorialRequest
+  type TemaEditorial, type CreateTemaEditorialRequest,
+  type Usuario, type CreateMediaRequest, type Media
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
+  // Auth & Users
+  getUser(id: number): Promise<Usuario | undefined>;
+  getUserByEmail(email: string): Promise<Usuario | undefined>;
+  getUsers(): Promise<Usuario[]>;
+  createUser(user: any): Promise<Usuario>;
+
   // Posts
   getPosts(): Promise<Post[]>;
   getPost(id: number): Promise<Post | undefined>;
@@ -30,9 +37,30 @@ export interface IStorage {
   // TemaEditoriais
   getTemaEditoriais(): Promise<TemaEditorial[]>;
   createTemaEditorial(tema: CreateTemaEditorialRequest): Promise<TemaEditorial>;
+
+  // Media
+  getMedia(): Promise<Media[]>;
+  createMedia(media: CreateMediaRequest): Promise<Media>;
 }
 
 export class DatabaseStorage implements IStorage {
+  // Users
+  async getUser(id: number): Promise<Usuario | undefined> {
+    const [user] = await db.select().from(usuarios).where(eq(usuarios.id, id));
+    return user;
+  }
+  async getUserByEmail(email: string): Promise<Usuario | undefined> {
+    const [user] = await db.select().from(usuarios).where(eq(usuarios.email, email));
+    return user;
+  }
+  async getUsers(): Promise<Usuario[]> {
+    return await db.select().from(usuarios);
+  }
+  async createUser(user: any): Promise<Usuario> {
+    const [newUser] = await db.insert(usuarios).values(user).returning();
+    return newUser;
+  }
+
   // Posts
   async getPosts(): Promise<Post[]> {
     return await db.select().from(posts);
@@ -99,6 +127,15 @@ export class DatabaseStorage implements IStorage {
   async createTemaEditorial(tema: CreateTemaEditorialRequest): Promise<TemaEditorial> {
     const [newTema] = await db.insert(temaEditoriais).values(tema).returning();
     return newTema;
+  }
+
+  // Media
+  async getMedia(): Promise<Media[]> {
+    return await db.select().from(media);
+  }
+  async createMedia(m: CreateMediaRequest): Promise<Media> {
+    const [newMedia] = await db.insert(media).values(m).returning();
+    return newMedia;
   }
 }
 

@@ -11,11 +11,13 @@ import {
   SidebarProvider, 
   SidebarTrigger 
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, Tags, Palette, Radio, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Tags, Palette, Radio, LogOut, Image as ImageIcon } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Posts", url: "/posts", icon: FileText },
+  { title: "Mídias", url: "/media", icon: ImageIcon },
   { title: "Editoriais", url: "/editoriais", icon: Tags },
   { title: "Temas Editoriais", url: "/temas", icon: Palette },
   { title: "Emissoras", url: "/emissoras", icon: Radio },
@@ -23,6 +25,7 @@ const navItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { logout } = useAuth();
 
   return (
     <Sidebar className="border-r-0 shadow-lg">
@@ -64,7 +67,10 @@ export function AppSidebar() {
         </SidebarGroup>
         
         <div className="mt-auto p-4">
-           <SidebarMenuButton className="w-full text-sidebar-foreground/70 hover:bg-white/5 hover:text-white flex items-center gap-3">
+           <SidebarMenuButton 
+             onClick={() => logout()}
+             className="w-full text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive flex items-center gap-3"
+           >
               <LogOut className="w-4 h-4" />
               <span>Sair do sistema</span>
            </SidebarMenuButton>
@@ -75,6 +81,15 @@ export function AppSidebar() {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  if (isLoading) return null;
+  if (!user && window.location.pathname !== "/login") {
+    setLocation("/login");
+    return null;
+  }
+
   const style = {
     "--sidebar-width": "18rem",
     "--sidebar-width-icon": "4rem",
@@ -89,9 +104,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="ml-auto flex items-center gap-4">
               <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
-                A
+                {user?.nomeCompleto?.charAt(0) || "A"}
               </div>
-              <span className="text-sm font-medium text-foreground">Admin User</span>
+              <span className="text-sm font-medium text-foreground">{user?.nomeCompleto || "Admin"}</span>
             </div>
           </header>
           <main className="flex-1 overflow-auto p-6 md:p-8 w-full max-w-7xl mx-auto">

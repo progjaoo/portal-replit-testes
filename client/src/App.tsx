@@ -11,15 +11,19 @@ import PostsPage from "./pages/posts";
 import EmissorasPage from "./pages/emissoras";
 import EditoriaisPage from "./pages/editoriais";
 import TemaEditoriaisPage from "./pages/temas";
+import MediaPage from "./pages/media";
+import LoginPage from "./pages/login";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/login" component={LoginPage}/>
       <Route path="/" component={Dashboard}/>
       <Route path="/posts" component={PostsPage}/>
       <Route path="/emissoras" component={EmissorasPage}/>
       <Route path="/editoriais" component={EditoriaisPage}/>
       <Route path="/temas" component={TemaEditoriaisPage}/>
+      <Route path="/media" component={MediaPage}/>
       <Route component={NotFound} />
     </Switch>
   );

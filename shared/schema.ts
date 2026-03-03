@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, longtext } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -61,6 +61,17 @@ export const posts = pgTable("posts", {
   statusPost: integer("status_post").notNull().default(1), // 1 = Rascunho, 2 = Publicado
   dataCriacao: timestamp("data_criacao").defaultNow(),
   publicadoEm: timestamp("publicado_em"),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+});
+
+// Media/Midas
+export const media = pgTable("media", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull(),
+  url: text("url").notNull(),
+  tipo: text("tipo").notNull(), // 'imagem', 'video', 'documento'
+  dataCriacao: timestamp("data_criacao").defaultNow(),
 });
 
 // Base Schemas
@@ -70,6 +81,7 @@ export const insertEditorialSchema = createInsertSchema(editoriais).omit({ id: t
 export const insertEmissoraSchema = createInsertSchema(emissoras).omit({ id: true });
 export const insertUsuarioSchema = createInsertSchema(usuarios).omit({ id: true, dataCriacao: true });
 export const insertPostSchema = createInsertSchema(posts).omit({ id: true, dataCriacao: true });
+export const insertMediaSchema = createInsertSchema(media).omit({ id: true, dataCriacao: true });
 
 // Types
 export type Usuario = typeof usuarios.$inferSelect;
@@ -78,9 +90,11 @@ export type Emissora = typeof emissoras.$inferSelect;
 export type Editorial = typeof editoriais.$inferSelect;
 export type TemaEditorial = typeof temaEditoriais.$inferSelect;
 export type Funcao = typeof funcoes.$inferSelect;
+export type Media = typeof media.$inferSelect;
 
 export type CreatePostRequest = z.infer<typeof insertPostSchema>;
 export type UpdatePostRequest = Partial<CreatePostRequest>;
 export type CreateEmissoraRequest = z.infer<typeof insertEmissoraSchema>;
 export type CreateEditorialRequest = z.infer<typeof insertEditorialSchema>;
 export type CreateTemaEditorialRequest = z.infer<typeof insertTemaEditorialSchema>;
+export type CreateMediaRequest = z.infer<typeof insertMediaSchema>;

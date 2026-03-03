@@ -3,11 +3,51 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import session from "express-session";
+import createMemoryStore from "memorystore";
+
+const MemoryStore = createMemoryStore(session);
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  app.use(
+    session({
+      cookie: { maxAge: 86400000 },
+      store: new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      }),
+      resave: false,
+      saveUninitialized: false,
+      secret: "keyboard cat"
+    })
+  );
+
+  // Auth
+  app.post(api.auth.login.path, async (req, res) => {
+    const { email, password } = req.body;
+    const user = await storage.getUserByEmail(email);
+    if (!user || user.senhaHash !== password) { // Simplificado para MVP
+      return res.status(401).json({ message: "Credenciais inválidas" });
+    }
+    (req.session as any).userId = user.id;
+    res.json({ user });
+  });
+
+  app.post(api.auth.logout.path, (req, res) => {
+    req.session.destroy(() => {
+      res.json({ success: true });
+    });
+  });
+
+  app.get(api.auth.me.path, async (req, res) => {
+    const userId = (req.session as any).userId;
+    if (!userId) return res.status(401).json({ message: "Não autorizado" });
+    const user = await storage.getUser(userId);
+    res.json(user);
+  });
+
   // Posts
   app.get(api.posts.list.path, async (req, res) => {
     const data = await storage.getPosts();
@@ -16,7 +56,7 @@ export async function registerRoutes(
 
   app.get(api.posts.get.path, async (req, res) => {
     const item = await storage.getPost(Number(req.params.id));
-    if (!item) return res.status(404).json({ message: "Post not found" });
+    if (!item) return res.status(404).json({ message: "Post não encontrado" });
     res.json(item);
   });
 
@@ -57,41 +97,9 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  app.get(api.emissoras.get.path, async (req, res) => {
-    const item = await storage.getEmissora(Number(req.params.id));
-    if (!item) return res.status(404).json({ message: "Emissora not found" });
-    res.json(item);
-  });
-
   app.post(api.emissoras.create.path, async (req, res) => {
-    try {
-      const input = api.emissoras.create.input.parse(req.body);
-      const data = await storage.createEmissora(input);
-      res.status(201).json(data);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
-      }
-      throw err;
-    }
-  });
-
-  app.put(api.emissoras.update.path, async (req, res) => {
-    try {
-      const input = api.emissoras.update.input.parse(req.body);
-      const data = await storage.updateEmissora(Number(req.params.id), input);
-      res.json(data);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
-      }
-      throw err;
-    }
-  });
-
-  app.delete(api.emissoras.delete.path, async (req, res) => {
-    await storage.deleteEmissora(Number(req.params.id));
-    res.status(204).end();
+    const data = await storage.createEmissora(api.emissoras.create.input.parse(req.body));
+    res.status(201).json(data);
   });
 
   // Editoriais
@@ -101,16 +109,8 @@ export async function registerRoutes(
   });
 
   app.post(api.editoriais.create.path, async (req, res) => {
-    try {
-      const input = api.editoriais.create.input.parse(req.body);
-      const data = await storage.createEditorial(input);
-      res.status(201).json(data);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
-      }
-      throw err;
-    }
+    const data = await storage.createEditorial(api.editoriais.create.input.parse(req.body));
+    res.status(201).json(data);
   });
 
   // TemaEditoriais
@@ -120,16 +120,30 @@ export async function registerRoutes(
   });
 
   app.post(api.temaEditoriais.create.path, async (req, res) => {
-    try {
-      const input = api.temaEditoriais.create.input.parse(req.body);
-      const data = await storage.createTemaEditorial(input);
-      res.status(201).json(data);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
-      }
-      throw err;
-    }
+    const data = await storage.createTemaEditorial(api.temaEditoriais.create.input.parse(req.body));
+    res.status(201).json(data);
+  });
+
+  // Media
+  app.get(api.media.list.path, async (req, res) => {
+    const data = await storage.getMedia();
+    res.json(data);
+  });
+
+  app.post(api.media.create.path, async (req, res) => {
+    const data = await storage.createMedia(api.media.create.input.parse(req.body));
+    res.status(201).json(data);
+  });
+
+  // Usuarios
+  app.get(api.usuarios.list.path, async (req, res) => {
+    const data = await storage.getUsers();
+    res.json(data);
+  });
+
+  app.post(api.usuarios.create.path, async (req, res) => {
+    const data = await storage.createUser(api.usuarios.create.input.parse(req.body));
+    res.status(201).json(data);
   });
 
   seedDatabase().catch(console.error);
@@ -138,38 +152,14 @@ export async function registerRoutes(
 }
 
 async function seedDatabase() {
-  const temas = await storage.getTemaEditoriais();
-  if (temas.length === 0) {
-    const tema = await storage.createTemaEditorial({
-      descricao: "Tema Principal Padrão",
-      corPrimaria: "#1d4ed8",
-      corSecundaria: "#3b82f6",
-      corFonte: "#ffffff",
-      logo: "https://placehold.co/400x200?text=Logo+Aqui"
-    });
-    
-    const editorial = await storage.createEditorial({
-      tipoPostagem: "Notícias",
-      temaEditorialId: tema.id
-    });
-
-    const emissora = await storage.createEmissora({
-      nomeSocial: "Emissora Exemplo",
-      razaoSocial: "Emissora S/A",
-      slug: "emissora-exemplo",
-      logo: "https://placehold.co/400x200?text=Logo+Emissora",
-      temaPrincipal: "Padrão",
-      ativa: true
-    });
-
-    await storage.createPost({
-      titulo: "Bem-vindo ao Novo CMS",
-      subtitulo: "Primeira postagem de teste",
-      conteudo: "Este é o conteúdo detalhado da nossa primeira postagem de teste.",
-      slug: "bem-vindo-ao-novo-cms",
-      editorialId: editorial.id,
-      emissoraId: emissora.id,
-      statusPost: 2,
+  const admin = await storage.getUserByEmail("admin@gtf.com");
+  if (!admin) {
+    await storage.createUser({
+      email: "admin@gtf.com",
+      nomeCompleto: "Administrador GTF",
+      senhaHash: "admin123",
+      statusUsuario: 1,
+      funcaoId: null
     });
   }
 }
