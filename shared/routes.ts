@@ -12,12 +12,16 @@ export const errorSchemas = {
   internal: z.object({ message: z.string() }),
 };
 
+
 export const api = {
   auth: {
     login: {
       method: 'POST' as const,
-      path: '/api/login' as const,
-      input: z.object({ email: z.string().email(), password: z.string() }),
+      path: '/api/usuarios/login' as const,
+      iinput: z.object({
+      email: z.string().email(),
+      senha: z.string(),
+    }),
       responses: { 200: z.object({ user: z.custom<typeof usuarios.$inferSelect>() }), 401: errorSchemas.unauthorized },
     },
     logout: {

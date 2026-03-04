@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import { api, buildUrl } from "@/shared/routes";
+import { api } from "@shared/routes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
 export function useAuth() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const { data: user, isLoading, error } = useQuery({
     queryKey: [api.auth.me.path],
     queryFn: async () => {
-      const res = await fetch(api.auth.me.path);
+      const res = await fetch(`${API_URL}/${api.auth.me.path}`);
       if (!res.ok) throw new Error("Não autenticado");
       return res.json();
     },
@@ -19,7 +20,7 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: any) => {
-      const res = await fetch(api.auth.login.path, {
+      const res = await fetch(`${API_URL}${api.auth.login.path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
